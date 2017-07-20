@@ -1,0 +1,170 @@
+<body>
+    <div
+        class="container"
+    >
+        <canvas id="slider1" nx="slider" label="Freq" min="100" max="1000"></canvas>
+        <!-- <canvas id="button1" nx="button"></canvas> -->
+    	<canvas id="toggle1" nx="toggle" label="Turn On"></canvas>
+        <canvas id="sliderVol" nx="slider" min="0.0" max="1.0"
+                label="Volume" height="50px" width="200px"></canvas>
+        <br>
+        <canvas nx="dial" id="dial1"></canvas>
+    </div>
+</body>
+<script src="../js/nexusUI_gold.js" charset="utf-8"></script>
+
+<script>
+    // initialize variables
+    var slider1,
+    toggle1,
+    dial1,
+    playing = false,
+    audio_context = window.AudioContext || window.webkitAudioContext,
+    con = new audio_context(),
+    ex = document.querySelector('.container'),
+    osc = con.createOscillator(),
+    vol = con.createGain(),
+    btn = document.querySelector('.btn'),
+    sliderVol,     // vol slider widget id;
+    cur_vol = 0.2;		// current gain value
+
+
+    vol.gain.value = 0;
+    osc.connect(vol);
+    vol.connect(con.destination);
+    osc.start();
+
+    var lfo = con.createOscillator();
+    var lfo_depth = con.createGain();
+    lfo.frequency.value = 4;
+    lfo_depth.gain.value = 10;
+
+    lfo.connect(lfo_depth);
+    lfo_depth.connect(osc.frequency);
+
+    lfo.start();
+
+    /*  nx.colorize( aspect, color )
+
+        Change the color of all nexus objects, by aspect ([fill, accent, border, accentborder]
+        nx.colorize("#00ff00") // changes the accent color by default
+        nx.colorize("border", "#000000") // changes the border color
+        aspect   string
+
+        Which part of ui to change, i.e. “accent” “fill”, “border”
+        color   string   Hex or rgb color code
+    */
+
+    nx.onload = function(){
+        slider1.on('*', slider1Changed);
+        toggle1.on('*', toggle1Changed);
+        sliderVol.on('*', change_vol);
+        sliderVol.val.value = 0.3;
+        dial1.on('*', change_lfo);
+        dial1.val.value = 0.5;
+
+        /*nx.colorize("#665099"); // change the accent color
+        nx.colorize("border", "#99DDAA"); // change the border
+        nx.colorize("fill", "#BBA0CC"); // change the fill*/
+
+
+        nx.colorize("accent", "sienna"); //"indianred");//"peru");//"darkkhaki");//"#347");  // change the accent color
+        nx.colorize("border", "#cc0000"); //"maroon"); "indianred"); //"sienna"); // "chocolate");//"darksalmon");//"#a9a");  // change the border
+        nx.colorize("fill", "tan"); //"burlywood");// "navajowhite");// "lightsalmon");// "wheat");//"#bcb");    // change the fill*/
+    };
+
+    function slider1Changed(data){
+        osc.frequency.value = data.value;
+        //console.log(data.value);
+    }
+    function toggle1Changed(data) {
+        if (data.value === 1) {
+            //console.log(true + "; " + data.value);
+            vol.gain.value=1;
+            toggle1.label = "Turn On";
+        } else {
+            //console.log(false + "; " + data.value);
+            vol.gain.value=0;
+            toggle1.label = "Turn Off";
+        }// some code using data.press, data.x, and data.y
+    }
+
+    // volume slider handler
+    function change_vol(data) {
+        //console.log(data);
+        vol.gain.value = cur_vol = data.value;
+    }
+
+    // type selector handler
+    function change_type(data) {
+        //console.log(data);
+	    osc.type = data.text;
+    }
+
+    function change_lfo(data) {
+        lfo.frequency.value = data.value*4;
+    }
+</script>
+
+<style>
+    body {
+        background-color: black;
+    }
+    div {
+        /*text-align:center;*/
+        font-family:helvetica;
+        font-size:9pt;
+        font-weight:500;
+        color:#aaa;
+        margin:10px 0px;
+        background-color: darkgray;
+    }
+    .btn {
+        background-color: darkslateblue;
+        color: lightsteelblue;
+        margin: 3px;
+        outline: none;
+    }
+    .container {
+        /*display: flex;
+        flex-direction: column;*/
+        /*justify-content: flex-end; /*space-between;*/
+        /*justify-content: flex-end; /*space-between; /*flex-start | flex-end | center | space-between | space-around */
+        background-color: black; /*rosybrown;/*firebrick; /*burlywood; /*darksalmon;*/
+        width: 365px;
+        height: 85%;
+        color:orange;
+        border-radius: 10px;
+        padding: 10px 20px;
+        justify-content: space-between;
+        outline: none;
+    }
+</style>
+
+<!--
+    button
+    Touch button with three modes of interaction (“toggle”, “impulse”, and “aftertouch”).
+
+    button.val
+    object
+    Main value set and output, with sub-properties:
+     	    data
+    press	0 (clicked) or 1 (unclicked)
+    x	    0-1 float of x-position of click (“aftertouch” mode only)
+    y	    0-1 float of y-position of click (“aftertouch” mode only)
+    When the widget is interacted with, val is sent as the output data for the widget.
+
+    button1.on('*', function(data) {
+        // some code using data.press, data.x, and data.y
+    });
+    Or, if NexusUI is outputting OSC (e.g. if nx.sendsTo(“ajax”)), val will be broken into OSC messages:
+    /button1/press  1
+    /button1/x      37
+    /button1/y      126
+
+    button.mode
+    string
+    Interaction mode. Options:impulse   1 on click
+    toggle   1 on click, 0 on release
+    aftertouch   1, x, y on click; x, y on move; 0, x, y on release (default)
+-->
